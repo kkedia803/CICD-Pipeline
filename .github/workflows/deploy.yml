@@ -1,0 +1,38 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    paths:
+      - "public/index.html" 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+
+    - name: Initialize Terraform
+      working-directory: terraform
+      run: terraform init
+
+    - name: Apply Terraform
+      working-directory: terraform
+      run: terraform apply -auto-approve
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        TF_VAR_ssh_private_key: ${{ secrets.PRIVATE_KEY_PATH }}
+
+    - name: Upload HTML to EC2
+      run: |
+        scp -i ${{ secrets.PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no public/index.html ubuntu@$(terraform -chdir=terraform output -raw ec2_public_ip):/tmp/index.html
+        ssh -i ${{ secrets.PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no ubuntu@$(terraform -chdir=terraform output -raw ec2_public_ip) << EOF
+          sudo mv /tmp/index.html /var/www/html/index.html
+          sudo systemctl restart nginx
+        EOF
+
