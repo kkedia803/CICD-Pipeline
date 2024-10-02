@@ -3,7 +3,7 @@ name: Deploy to AWS EC2
 on:
   push:
     paths:
-      - "public/index.html" 
+      - "index.html" 
 
 jobs:
   deploy:
