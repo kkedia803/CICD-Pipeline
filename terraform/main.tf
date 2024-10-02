@@ -12,7 +12,7 @@ resource "aws_instance" "web" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/public/index.html" # Local path to your HTML file
+    source      = "D:/devops/sample/public/index.html" # Local path to your HTML file
     destination = "/tmp/index.html"   # Destination on the EC2 instance
 
     connection {
